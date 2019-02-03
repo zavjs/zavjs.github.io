@@ -29,16 +29,16 @@
       "path----557518bd178906f8d58a.js.map"
     ],
     "path---tags-javascript": [
-      "path---tags-javascript-3493f089509d5ace4aaa.js",
-      "path---tags-javascript-3493f089509d5ace4aaa.js.map"
+      "path---tags-javascript-f1e3ad0429810466c506.js",
+      "path---tags-javascript-f1e3ad0429810466c506.js.map"
     ],
     "path---tags-node-js": [
       "path---tags-node-js-8c56da7560ee3383d887.js",
       "path---tags-node-js-8c56da7560ee3383d887.js.map"
     ],
     "path---tags-react": [
-      "path---tags-react-c5a9fe60b845acbebbbb.js",
-      "path---tags-react-c5a9fe60b845acbebbbb.js.map"
+      "path---tags-react-461fa6e7302e892b56d7.js",
+      "path---tags-react-461fa6e7302e892b56d7.js.map"
     ],
     "path---a-word-on-functions": [
       "path---a-word-on-functions-253b4053afefe1f87473.js",
@@ -77,12 +77,8 @@
       "path---render-props-with-react-a60df2fbe551a6ef0d08.js.map"
     ],
     "path---index": [
-      "path---index-f2eff5986346136a6482.js",
-      "path---index-f2eff5986346136a6482.js.map"
-    ],
-    "path---deep-equals-comparison": [
-      "path---deep-equals-comparison-1bd5c5928431cdd72a69.js",
-      "path---deep-equals-comparison-1bd5c5928431cdd72a69.js.map"
+      "path---index-b246ce4271a072cab681.js",
+      "path---index-b246ce4271a072cab681.js.map"
     ],
     "component---src-pages-404-js": [
       "component---src-pages-404-js-4503918ea3a16cfcdb75.js",
@@ -121,9 +117,9 @@
       "path---tags-ajax-5391bd12f894eea3765a.js.map"
     ],
     "app": [
-      "app-be47b90e2cd43e70a367.js",
+      "app-521af12ce26d230b623c.js",
       "build-js-styles.css",
-      "app-be47b90e2cd43e70a367.js.map",
+      "app-521af12ce26d230b623c.js.map",
       "build-js-styles.css.map"
     ],
     "path---404": [
