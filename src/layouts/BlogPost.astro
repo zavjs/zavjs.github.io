@@ -19,10 +19,10 @@ function formatDate(date: Date) {
   <body>
     <Header />
     <div class="post-detail">
+      <a class="post-detail__back" href="/">← Home</a>
       <h1 class="post-detail__title">{title}</h1>
       <h3 class="post-detail__date">{formatDate(pubDate)}</h3>
       <div class="post-detail__content">
-        🏠 <a href="/">Home</a>
         <div class="post-detail__markdown">
           <slot />
         </div>
