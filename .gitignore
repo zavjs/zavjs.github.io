@@ -1,3 +1,24 @@
 node_modules/
 dist/
 .astro/
+.claude/
+
+# old Gatsby build artifacts
+*.js.map
+render-page.js.map
+chunk-manifest.json
+stats.json
+render-page.js.map
+build-js-styles.css
+build-js-styles.css.map
+styles.css
+index.html
+404.html
+404/
+page-2/
+static/
+tags/
+app-*.js
+commons-*.js
+component---*.js
+path---*.js
