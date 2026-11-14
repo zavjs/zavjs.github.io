@@ -87,7 +87,7 @@ See the module example below:
 const fs = require("fs");
 
 console.log(fs.readFileSync("myfile.txt", "utf-8")); //file contents
-fs.writeFileSync("mynewfile.txt", "my new file is aweseom"); //file written
+fs.writeFileSync("mynewfile.txt", "my new file is awesome"); //file written
 ```
 
 -

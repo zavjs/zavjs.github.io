@@ -26,11 +26,11 @@ var SongBox = {
       // adds if it doesn't
       this.songs = {
         ...this.songs,
-        [id]: song
+        [song.id]: song
       };
     }
 
-    console.log("\u266a", this.songs[id]);
+    console.log("\u266a", this.songs[song.id]);
   },
   getSongById: function(id) {
     return this.songs[id];

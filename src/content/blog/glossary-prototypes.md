@@ -13,7 +13,7 @@ Different from the classical model, we don't inherit from prototypes as we would
 
 ### The Chain
 
-When using prototype objects to create new ones, the methods are not replicated in the instance object. Instead, they're referenced. Each instance has a link pointing to the prototype (original object) so when we execute one object's method, JavaScript first tries to see if it finds in the instance, going up the chain until it finds if it doesn't.
+When using prototype objects to create new ones, the methods are not replicated in the instance object. Instead, they're referenced. Each instance has a link pointing to the prototype (original object) so when we execute one object's method, JavaScript first tries to see if it finds in the instance, going up the chain until it finds the property, or reaches the end of the chain.
 
 ```js
 class SuperAnimal {}

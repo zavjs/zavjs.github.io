@@ -134,7 +134,7 @@ The way to solve this is to circumveint the execution context and explicitly set
 ```js
 var party = {
     party: [],
-    addToParty: () { /**/ },
+    addToParty: () => { /**/ },
     getPeople: people.getPeople.bind(people)
 };
 ```

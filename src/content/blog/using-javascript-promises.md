@@ -62,7 +62,7 @@ To see how to implement a Promise in a very basic manner, first let's compare it
 
 ```js
 loadImage('blossom.png', 'wrapper', function (containerId, img) {
-    document.findElementById(containerId).appendChild(img);
+    document.getElementById(containerId).appendChild(img);
 }, function (err) {
     console.error(`error found while loading image: ${err}`);
 });
@@ -84,9 +84,9 @@ function loadImage(url, containerId, success, error) {
 With Promises, we need to wrap our operations (timers, requests, etc) on a new Promise instantiation and either Resolve or Reject with the response of these requests. The same example above, in Promises, would be:
 
 ```js
-loadImage('blossom.png', 'wrapper');
-    .then(function (containerId, img) {
-        document.findElementById(containerId).appendChild(img);
+loadImage('blossom.png', 'wrapper')
+    .then(function ({ containerId, img }) {
+        document.getElementById(containerId).appendChild(img);
     })
     .catch(function (err) {
         console.error(`error found while loading image: ${err}`);
@@ -98,7 +98,7 @@ function loadImage(url, containerId) {
         img.src = url;
 
         img.onload = function () {
-            resolve(containerId, img);
+            resolve({ containerId, img });
         };
 
         img.onerror = function () {
@@ -132,7 +132,7 @@ var users = function() {
 
 //fetch api uses promises natively
 var getUser = function(userName) {
-  return fetch(`https://api.github.com/${userName}`);
+  return fetch(`https://api.github.com/users/${userName}`);
 };
 
 getUser(users().getUser("zavjs").id)
