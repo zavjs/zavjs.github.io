@@ -2,25 +2,33 @@
 title: "Generating an SSH key"
 pubDate: "2019-02-03"
 heroImage: ""
-description: "Passwords tend to be weak and predictable. That's because humans are lazy and end up choosing common passwords like 123456 or mickeymouse123. Furthermore, it's…"
+description: "Passwords tend to be weak and predictable. People pick what's easy to remember, so passwords like 123456 and mickeymouse123 are everywhere."
 ---
 
-Passwords tend to be weak and predictable. That's because humans are lazy and end up choosing common passwords like 123456 or mickeymouse123. Furthermore, it's common for an user to use the same password in multiple different places. That creates problems. For instance, security breaches in one place, like a database, can generate breaches in several others as well.
+Passwords tend to be weak and predictable. People pick what's easy to remember, so passwords like `123456` and `mickeymouse123` are everywhere. Worse, many people reuse one password across several sites. When one site's database leaks, attackers can use the stolen passwords to break into the same users' accounts on other sites.
 
 ### SSH
 
-SSH provides a solution to that, because of its cryptographic mechanism. We generate two counterparts: a public key and hash. The public key is specifically created to match that one hash. We place the public key in the server, and any attempts to connect necessarily require the hash.
+SSH solves this with public-key cryptography. We generate a matching pair of keys: a public key and a private key. We put the public key on the server, and every login has to prove it holds the matching private key.
 
-Since nothing is perfect, SSH also introduces its own kinds of risks, like the fact that having the hash sitting in your computer means that anyone with access to it will have access to your server. That is topic for later discussions.
+No solution is perfect, and SSH brings risks of its own. Anyone who gets hold of the private key on your computer can get into your server. That's a topic for another post.
 
-#### Generate SSH files in a "safe" place
+### Generate the keys somewhere safe
 
-The concept of safe here is intended to mean "not easily loseable". This is important because since we're talking of server access, if we configure SSH login and disable password access, that necessarily means if we lose the hash file, we'll be locked out of our server.
+Here, "safe" means "hard to lose." If we set up key-based login and turn off password login, losing the private key locks us out of our own server.
 
-So, with the command line go to the ~/.ssh folder:
+In a terminal, go to the `~/.ssh` folder:
 
+```bash
 cd ~/.ssh
+```
 
-Then run ssh-keygen -t rsa (-t rsa indicates rsa as encryption type)
+Then run:
 
-The prompt will show a series of questions like which name you want to give to your key. Important in the naming step, make sure not to use the default value, because it's likely you already have such file created for other applications in your system. So just provide another name.
+```bash
+ssh-keygen -t rsa
+```
+
+The `-t rsa` flag sets RSA as the key type.
+
+`ssh-keygen` asks a few questions, starting with a name for the key file. Don't accept the default: you may already have a key with that name for other tools, so give it a new one.

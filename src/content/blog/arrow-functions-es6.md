@@ -2,12 +2,12 @@
 title: "ES6 Arrow Functions"
 pubDate: "2019-02-03"
 heroImage: ""
-description: "This post showed the different ways a function can be executed and the context implications of each. The keyword this is source of a lot of confusion, even for…"
+description: "There are different ways to call a function, and each one changes what this refers to. ES6 introduced arrow functions to make our lives easier."
 ---
 
-This post showed the different ways a function can be executed and the context implications of each. The keyword this is source of a lot of confusion, even for seasoned developers. The arrow function showed up as a way to make our lives easier and is one of the most appreciated ES6 features.
+There are different ways to call a function, and each one changes what `this` refers to. The `this` keyword confuses even seasoned developers. ES6 introduced arrow functions to make our lives easier, and they quickly became one of its most popular features.
 
-Shorter syntax:
+### Shorter syntax
 
 ```js
 const sum2 = function(num) {
@@ -19,9 +19,9 @@ const sum2 = function(num) {
 const sum2 = num => num + 2;
 ```
 
-Notice we got rid of a few things: the function identifier, the return statement and in this particular case even the curly braces. Think of nested callbacks or even promises: no need for multiple repetitive function and return statements.
+We dropped the `function` keyword, the `return` statement and, in this case, the curly braces. In nested callbacks or promise chains, this saves us from writing `function` and `return` again and again.
 
-Consistency in context with this:
+### Consistent this
 
 ```js
 Animal.prototype.attack = function() {
@@ -31,4 +31,4 @@ Animal.prototype.attack = function() {
 };
 ```
 
-this.id will always be set to the caller's context (in this case the attack prototype function) and the arrow function cannot be coerced to treat it any differently (apply, bind).
+Inside the arrow function, `this` is the same as in the enclosing `attack` method, so `this.id` is the animal's id. Neither `call`, `apply` nor `bind` can change it.
