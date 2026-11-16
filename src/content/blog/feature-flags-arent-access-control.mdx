@@ -37,7 +37,7 @@ I preferred one-way rules, and the team eventually moved to them. A rule can sti
 
 "Why can't this user see it?" now has a short answer: no rule that covers them is on yet. You look for one and either find it or don't.
 
-The code change was one line:
+The diff is one line, but what it means for every rule in the system is much bigger:
 
 ```diff
 - const isOn = rules.every((r) => r.enabled);
