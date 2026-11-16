@@ -1,0 +1,449 @@
+---
+// Interactive figure: the same five rule levels evaluated two ways.
+// Left: deny-overrides (every matching rule must be on).
+// Right: one-way rules (any rule that's on turns the feature on; an off rule is ignored).
+const levels = [
+  { id: 'global', level: 'Global', target: 'Everyone' },
+  { id: 'org', level: 'Org', target: 'Acme Health' },
+  { id: 'role', level: 'Role', target: 'Nurse' },
+  { id: 'list', level: 'List', target: 'pilot' },
+  { id: 'user', level: 'User', target: 'ana@acme.health' },
+];
+---
+
+<div class="ff" data-flag-rules>
+  <div class="ff-cards">
+    <section class="ff-card" data-model="deny" aria-label="Deny-overrides model">
+      <header class="ff-head">
+        <span class="ff-kicker">Deny-overrides</span>
+        <span class="ff-rule">One <b>off</b> beats every <b>on</b></span>
+      </header>
+      <ul class="ff-rows">
+        {levels.map((l) => (
+          <li class="ff-row" data-id={l.id}>
+            <span class="ff-level">{l.level}</span>
+            <span class="ff-target">{l.target}</span>
+            <button type="button" class="ff-switch" role="switch" aria-checked="true" aria-label={`${l.level} ${l.target}`}>
+              <span class="ff-knob"></span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div class="ff-result" aria-live="polite">
+        <span class="ff-status"></span>
+        <span class="ff-why"></span>
+      </div>
+      <div class="ff-code"></div>
+    </section>
+
+    <section class="ff-card" data-model="grant" aria-label="One-way rules model">
+      <header class="ff-head">
+        <span class="ff-kicker">One-way rules</span>
+        <span class="ff-rule">One <b>on</b> is enough</span>
+      </header>
+      <div class="ff-days" role="group" aria-label="Rollout day">
+        <button type="button" data-day="1">Day 1</button>
+        <button type="button" data-day="10">Day 10</button>
+        <button type="button" data-day="20">Day 20</button>
+        <button type="button" data-day="30">Day 30</button>
+      </div>
+      <ul class="ff-rows">
+        {levels.map((l) => (
+          <li class="ff-row" data-id={l.id}>
+            <span class="ff-level">{l.level}</span>
+            <span class="ff-target">{l.target}</span>
+            <button type="button" class="ff-switch" role="switch" aria-checked="true" aria-label={`${l.level} ${l.target}`}>
+              <span class="ff-knob"></span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div class="ff-result" aria-live="polite">
+        <span class="ff-status"></span>
+        <span class="ff-why"></span>
+      </div>
+      <div class="ff-code"></div>
+    </section>
+  </div>
+
+  <div class="ff-foot">
+    <span class="ff-hint">Flip the same switch on both sides, or pick a rollout day.</span>
+    <button type="button" class="ff-reset">Reset</button>
+  </div>
+</div>
+
+<script>
+  type Id = 'global' | 'org' | 'role' | 'list' | 'user';
+  const LABEL: Record<Id, string> = {
+    global: 'Global · Everyone',
+    org: 'Org · Acme Health',
+    role: 'Role · Nurse',
+    list: 'List · pilot',
+    user: 'User · ana@',
+  };
+  const ROLLOUT: Record<number, Id[]> = {
+    1: ['user'],
+    10: ['user', 'list'],
+    20: ['user', 'list', 'org'],
+    30: ['user', 'list', 'org', 'global'],
+  };
+  const ORDER: Id[] = ['global', 'org', 'role', 'list', 'user'];
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-flag-rules]')) {
+    const deny = root.querySelector<HTMLElement>('[data-model="deny"]')!;
+    const grant = root.querySelector<HTMLElement>('[data-model="grant"]')!;
+
+    let rules: Record<Id, boolean>;
+    let grants: Record<Id, boolean>;
+    let day: number | null;
+
+    const reset = () => {
+      // The forgotten rule: someone turned the Nurse role off months ago.
+      rules = { global: true, org: true, role: false, list: true, user: true };
+      // Same switches on both sides to start.
+      grants = { ...rules };
+      day = null;
+      render();
+    };
+
+    const row = (card: HTMLElement, id: Id) =>
+      card.querySelector<HTMLElement>(`.ff-row[data-id="${id}"]`)!;
+
+    function render() {
+      // Deny-overrides: visible only if every rule is on.
+      const offs = ORDER.filter((id) => !rules[id]);
+      const denyOn = offs.length === 0;
+      for (const id of ORDER) {
+        const r = row(deny, id);
+        r.querySelector('.ff-switch')!.setAttribute('aria-checked', String(rules[id]));
+        r.classList.toggle('is-blocking', !rules[id]);
+        r.classList.toggle('is-ok', denyOn);
+      }
+      setResult(
+        deny,
+        denyOn,
+        denyOn ? 'Every rule is on' : `Blocked by ${offs.map((id) => LABEL[id]).join(', ')}`,
+        `[${ORDER.map((id) => (rules[id] ? 'on' : 'off')).join(', ')}].every(on)`,
+        String(denyOn),
+      );
+
+      // One-way: visible if any rule that's on covers Ana. Off rules are ignored.
+      const granted = ORDER.filter((id) => grants[id]);
+      const grantOn = granted.length > 0;
+      for (const id of ORDER) {
+        const r = row(grant, id);
+        const has = grants[id];
+        r.querySelector('.ff-switch')!.setAttribute('aria-checked', String(has));
+        r.classList.toggle('is-granted', has);
+        r.classList.toggle('is-empty', !has);
+      }
+      setResult(
+        grant,
+        grantOn,
+        grantOn
+          ? day === 30
+            ? 'Everyone has it. Delete the flag.'
+            : `Turned on by ${granted.map((id) => LABEL[id]).join(', ')}`
+          : 'No rule that covers Ana is on',
+        `[${ORDER.map((id) => (grants[id] ? 'on' : 'off')).join(', ')}].some(on)`,
+        String(grantOn),
+      );
+
+      for (const b of root.querySelectorAll<HTMLButtonElement>('[data-day]')) {
+        b.setAttribute('aria-pressed', String(Number(b.dataset.day) === day));
+      }
+    }
+
+    function setResult(card: HTMLElement, on: boolean, why: string, expr: string, value: string) {
+      const res = card.querySelector('.ff-result')!;
+      res.classList.toggle('on', on);
+      res.querySelector('.ff-status')!.textContent = on ? 'Ana sees the feature' : 'Hidden from Ana';
+      res.querySelector('.ff-why')!.textContent = why;
+      const code = card.querySelector('.ff-code')!;
+      code.innerHTML = '';
+      const e = document.createElement('span');
+      e.textContent = expr;
+      const v = document.createElement('span');
+      v.className = on ? 'v on' : 'v';
+      v.textContent = `→ ${value}`;
+      v.style.whiteSpace = 'nowrap';
+      code.append(e, ' ', v);
+    }
+
+    function nudge(el: Element) {
+      el.classList.remove('nudge');
+      void (el as HTMLElement).offsetWidth;
+      el.classList.add('nudge');
+    }
+
+    deny.addEventListener('click', (ev) => {
+      const sw = (ev.target as Element).closest('.ff-switch');
+      if (!sw) return;
+      const id = sw.closest<HTMLElement>('.ff-row')!.dataset.id as Id;
+      rules[id] = !rules[id];
+      render();
+      // Turning something on that changes nothing: point at what blocks it.
+      if (rules[id]) deny.querySelectorAll('.is-blocking').forEach(nudge);
+    });
+
+    grant.addEventListener('click', (ev) => {
+      const b = (ev.target as Element).closest('.ff-switch');
+      if (!b) return;
+      const id = b.closest<HTMLElement>('.ff-row')!.dataset.id as Id;
+      grants[id] = !grants[id];
+      day = null;
+      render();
+    });
+
+    root.querySelectorAll<HTMLButtonElement>('[data-day]').forEach((b) =>
+      b.addEventListener('click', () => {
+        day = Number(b.dataset.day);
+        grants = Object.fromEntries(ORDER.map((id) => [id, ROLLOUT[day!].includes(id)])) as Record<Id, boolean>;
+        render();
+      }),
+    );
+    root.querySelector('.ff-reset')!.addEventListener('click', reset);
+
+    reset();
+  }
+</script>
+
+<style>
+  .ff {
+    --ff-border: #e7e5e4;
+    --ff-ink: #1c1917;
+    --ff-muted: #78716c;
+    --ff-faint: #a8a29e;
+    --ff-green: #16a34a;
+    --ff-green-bg: #f0fdf4;
+    --ff-green-ink: #166534;
+    --ff-red: #dc2626;
+    --ff-red-bg: #fef2f2;
+    --ff-red-ink: #991b1b;
+    margin: 2rem 0 2.25rem;
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    line-height: 1.35;
+    color: var(--ff-ink);
+  }
+  .ff-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 620px) {
+    .ff-cards { grid-template-columns: 1fr; }
+  }
+  .ff-card {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid var(--ff-border);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 1px 2px rgba(28, 25, 23, 0.04), 0 6px 24px -12px rgba(28, 25, 23, 0.12);
+  }
+  .ff-head {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 10px;
+  }
+  .ff-kicker {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ff-muted);
+  }
+  .ff-rule {
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+  .ff-rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+  .ff-row {
+    display: grid;
+    grid-template-columns: 50px 1fr auto;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    margin: 0;
+    padding: 4px 6px 4px 10px;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    background: #fafaf9;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .ff-level {
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ff-faint);
+  }
+  .ff-target {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ff-row.is-blocking {
+    background: var(--ff-red-bg);
+    border-color: #fecaca;
+  }
+  .ff-row.is-blocking .ff-level { color: var(--ff-red); }
+  .ff-row.is-granted {
+    background: var(--ff-green-bg);
+    border-color: #bbf7d0;
+  }
+  .ff-row.is-granted .ff-level { color: var(--ff-green); }
+  .ff-row.is-empty {
+    background: transparent;
+    border-color: var(--ff-border);
+  }
+  .ff-row.is-empty .ff-target { color: var(--ff-faint); }
+
+  /* Switch */
+  .ff-switch {
+    position: relative;
+    width: 34px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: #d6d3d1;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .ff-switch[aria-checked='true'] { background: var(--ff-green); }
+  .is-blocking .ff-switch { background: var(--ff-red); }
+  .ff-knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s;
+  }
+  .ff-switch[aria-checked='true'] .ff-knob { transform: translateX(14px); }
+
+  .ff-reset:hover { border-color: var(--ff-faint); }
+
+  .ff-switch:focus-visible, .ff-foot button:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+
+  /* Result */
+  .ff-result {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: auto;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #f5f5f4;
+    color: #57534e;
+  }
+  .ff-result.on { background: #dcfce7; color: var(--ff-green-ink); }
+  .ff-status {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .ff-status::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin: 0 7px 1px 0;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.6;
+  }
+  .ff-why { opacity: 0.85; }
+  .ff-code {
+    margin-top: 8px;
+    font-family: SFMono-Regular, Consolas, Menlo, monospace;
+    font-size: 0.7rem;
+    color: var(--ff-muted);
+    overflow-wrap: anywhere;
+  }
+  .ff-code .v { color: var(--ff-red); font-weight: 600; }
+  .ff-code .v.on { color: var(--ff-green); }
+
+  /* Footer */
+  .ff-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .ff-days {
+    display: flex;
+    gap: 2px;
+    margin: -2px 0 10px;
+    padding: 2px;
+    border-radius: 999px;
+    background: #f5f5f4;
+  }
+  .ff-days button {
+    flex: 1;
+    font: inherit;
+    font-size: 0.72rem;
+    padding: 3px 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ff-muted);
+    cursor: pointer;
+  }
+  .ff-days button[aria-pressed='true'] {
+    background: #fff;
+    color: var(--ff-ink);
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(28, 25, 23, 0.12);
+  }
+  .ff-days button:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+  }
+  .ff-hint {
+    color: var(--ff-muted);
+    font-size: 0.75rem;
+  }
+  .ff-foot button {
+    font: inherit;
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--ff-border);
+    background: #fff;
+    color: var(--ff-ink);
+    cursor: pointer;
+  }
+  .ff-foot .ff-reset { color: var(--ff-muted); }
+
+  .nudge { animation: ff-nudge 0.45s ease; }
+  @keyframes ff-nudge {
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(2px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .nudge { animation: none; }
+    .ff * { transition: none !important; }
+  }
+</style>

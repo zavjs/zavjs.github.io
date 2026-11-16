@@ -200,3 +200,26 @@ blockquote { margin: 0 1.45rem 1.45rem; padding: 0; }
 .gatsby-highlight {
   margin-bottom: 35px;
 }
+
+/* Animated figures (src/figures). The canvas reads these for its colors. */
+:root {
+  --fig-bg: #ffffff;
+  --fig-fg: #1c1917;
+  --fig-muted: #a8a29e;
+  --fig-grid: #eeedeb;
+  --fig-accent: #3b6fe0;
+  --fig-accent-2: #e08a2c;
+  --fig-danger: #e5484d;
+}
+
+/* Highlighted passage in a post: <aside class="callout"> */
+.callout {
+  margin: 1.75rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 3px solid #3b6fe0;
+  border-radius: 0 10px 10px 0;
+  background: #f3f6fd;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+.callout > p { margin: 0; text-align: left; }

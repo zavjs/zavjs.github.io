@@ -1,0 +1,80 @@
+---
+title: "Feature flags aren't access control"
+description: "Why we replaced deny-overrides with one-way rules in our feature flag service."
+pubDate: 2026-11-16
+---
+import FlagRules from "../../components/figures/FlagRules.astro";
+
+A feature flag answers one question: is this rollout ready for this person yet? Access control answers a different one: is this person allowed to see this data? When one system tries to answer both, it quickly gets hard to reason about. This is the story of how I learned that on a startup project.
+
+## The setup
+
+Our stakeholders were careful about data reaching the wrong users, so they asked for flags with rules at five levels: global, organization, role, email list and user. Each rule could turn a feature on or off. If any rule said off, the feature was off. One "off" anywhere beat every "on", like a kill switch.
+
+I built the flag service in Nest.js and the SDKs for React and Python. The service returned every rule that matched a user for a given feature. The SDK turned the feature on only if all of them were on:
+
+```ts
+const isOn = rules.every((r) => r.enabled);
+```
+
+## Where it got weird
+
+Some screens had PII guardrail switches. Flipping one saved a user-level rule. If the user's organization had that feature off, the user could flip the switch on, the save succeeded, and the switch went back to off. From the user's side, the app looked broken, despite it behaving exactly as intended.
+
+Imagine Ana is a nurse at Acme Health. Everything is on for her except one rule someone set on the Nurse role months ago and forgot. Flip the switches in both models to compare.
+
+<FlagRules />
+
+With deny-overrides, Ana's own rule is on and she still can't see the feature. The only way to find out why is to read every rule.
+
+## One-way rules
+
+I preferred one-way rules, and the team eventually moved to them. A rule can still be on or off, but an off rule only stops granting. It never blocks the others.
+
+1. A new feature starts off for everyone.
+2. You widen it step by step: one user, then a list, then an organization.
+3. When it reaches global, you delete the flag.
+
+"Why can't this user see it?" now has a short answer: no rule that covers them is on yet. You look for one and either find it or don't.
+
+The code change was one line:
+
+```diff
+- const isOn = rules.every((r) => r.enabled);
++ const isOn = rules.some((r) => r.enabled);
+```
+
+The `enabled` column stayed. Turning a rule off pauses it without deleting it, so its history stays in the table and turning it back on is one click.
+
+The PII guardrail switches moved out of the flag system and became a user setting in the admin dashboard, where they belonged.
+
+## What about leaks?
+
+This was the stakeholders' real worry, so it deserves a direct answer. One-way rules are safer for a few reasons:
+
+- **Default off.** A feature with no rule turned on is invisible. If someone forgets a rule, the feature stays hidden.
+- **Rules are auditable.** Every rule is a row with an author and a date. "Who can see this?" is a query.
+- **No rule can hide another.** There is no state where an "on" and an "off" fight.
+- **The kill switch still exists.** It lives at the feature level: one switch that turns the whole flag off for everyone.
+- **Flags were never the security boundary.** API permissions decide who can read patient data. A flag only decides whether a piece of code runs or not. If the code runs for the wrong person, the API still says no.
+
+## When deny-overrides is right
+
+Deny-overrides is a good model for long-lived access control. IAM policies work this way: an explicit deny beats any allow. Firewalls work the same way. Those rules exist for years and protect a boundary, so a single "no" that always wins is what you want.
+
+<aside class="callout">
+
+Feature flags are short-lived. They exist to roll something out and then disappear. Give them the model that fits a rollout.
+
+</aside>
+
+## Keeping flags short-lived
+
+One-way rules work best when flags actually get deleted. A few things help:
+
+- Show each flag's age in the admin.
+- Warn when a flag goes global, since that's the moment to remove it.
+- Lint the codebase for flag keys that no longer exist, or that have been global for a while.
+- Flag redundant rules when they are created, such as a user rule under an organization that already has the feature.
+
+The rule I took from this: if a check protects data, it belongs in your permissions. If it protects a rollout, it belongs in a flag, and the flag should only ever say yes.

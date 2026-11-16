@@ -1,0 +1,124 @@
+---
+import { figures } from "../figures/registry";
+
+interface Props {
+  /** Name from src/figures/registry.ts */
+  name: string;
+  /** Fixed seed so the figure looks the same for every reader. */
+  seed?: number;
+  /** Short description for screen readers. */
+  alt: string;
+  caption?: string;
+}
+
+const { name, seed = 42, alt, caption } = Astro.props;
+if (!(name in figures)) throw new Error(`Unknown figure "${name}". Add it to src/figures/registry.ts.`);
+---
+
+<figure class="fig" data-figure={name} data-seed={seed}>
+  <canvas role="img" aria-label={alt}></canvas>
+  <div class="fig-controls">
+    <button type="button" data-action="toggle" aria-label="Pause">Pause</button>
+    <button type="button" data-action="replay">Replay</button>
+    <button type="button" data-action="reseed" hidden>New random seed</button>
+    <span class="fig-seed" hidden></span>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<script>
+  import { figures } from "../figures/registry";
+  import { mountScene } from "../figures/runtime";
+
+  // Load each figure's code shortly before it scrolls into view.
+  const near = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        near.unobserve(e.target);
+        mount(e.target as HTMLElement);
+      }
+    },
+    { rootMargin: "400px" },
+  );
+  document.querySelectorAll<HTMLElement>("figure[data-figure]").forEach((el) => near.observe(el));
+
+  async function mount(el: HTMLElement) {
+    const load = figures[el.dataset.figure!];
+    const { default: scene } = await load();
+    const canvas = el.querySelector("canvas")!;
+    const toggle = el.querySelector<HTMLButtonElement>('[data-action="toggle"]')!;
+    const replay = el.querySelector<HTMLButtonElement>('[data-action="replay"]')!;
+    const reseed = el.querySelector<HTMLButtonElement>('[data-action="reseed"]')!;
+    const seedLabel = el.querySelector<HTMLSpanElement>(".fig-seed")!;
+
+    const player = mountScene(canvas, scene, {
+      seed: Number(el.dataset.seed),
+      onState(p) {
+        toggle.textContent = p.playing ? "Pause" : "Play";
+        toggle.setAttribute("aria-label", p.playing ? "Pause" : "Play");
+        seedLabel.textContent = `seed ${p.seed}`;
+      },
+    });
+    seedLabel.textContent = `seed ${player.seed}`;
+    toggle.textContent = player.playing ? "Pause" : "Play";
+
+    toggle.addEventListener("click", () => (player.playing ? player.pause() : player.play()));
+    replay.addEventListener("click", () => player.replay());
+    if (scene.random) {
+      reseed.hidden = false;
+      seedLabel.hidden = false;
+      reseed.addEventListener("click", () => player.reseed());
+    }
+  }
+</script>
+
+<style>
+  .fig {
+    margin: 2rem 0 2.25rem;
+    font-family: var(--sans);
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    border: 1px solid #e7e5e4;
+    border-radius: 14px;
+    background: var(--fig-bg);
+    box-shadow: 0 1px 2px rgba(28, 25, 23, 0.04), 0 6px 24px -12px rgba(28, 25, 23, 0.12);
+  }
+  .fig-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 0.75rem;
+  }
+  button {
+    font: inherit;
+    color: #1c1917;
+    background: #fff;
+    border: 1px solid #e7e5e4;
+    border-radius: 999px;
+    padding: 4px 10px;
+    cursor: pointer;
+  }
+  button:hover {
+    border-color: #a8a29e;
+  }
+  button:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+  .fig-seed {
+    margin-left: 4px;
+    color: #a8a29e;
+    font-variant-numeric: tabular-nums;
+  }
+  figcaption {
+    margin-top: 8px;
+    color: #78716c;
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+</style>

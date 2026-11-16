@@ -1,0 +1,28 @@
+---
+// Every animated figure on one page, for building and reviewing them.
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Figure from '../components/Figure.astro';
+import { figures } from '../figures/registry';
+---
+
+<html lang="en">
+  <head>
+    <BaseHead title="Figure lab - zavjs" description="Animated figures used in posts." />
+    <meta name="robots" content="noindex" />
+  </head>
+  <body>
+    <Header />
+    <div class="post-detail">
+      <h1 class="post-detail__title">Figure lab</h1>
+      <div class="post-detail__content">
+        {Object.keys(figures).map((name) => (
+          <>
+            <h2><code>{name}</code></h2>
+            <Figure name={name} alt={`${name} animation`} />
+          </>
+        ))}
+      </div>
+    </div>
+  </body>
+</html>
